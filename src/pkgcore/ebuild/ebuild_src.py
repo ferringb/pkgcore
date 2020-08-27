@@ -49,8 +49,8 @@ def generate_licenses(self):
 
 def _mk_required_use_node(data):
     if data[0] == '!':
-        return values.ContainmentMatch2(data[1:], negate=True)
-    return values.ContainmentMatch2(data)
+        return values.ContainmentMatch(data[1:], negate=True)
+    return values.ContainmentMatch(data)
 
 
 def generate_required_use(self):
@@ -74,7 +74,7 @@ def generate_required_use(self):
 
             return conditionals.DepSet.parse(
                 data,
-                values.ContainmentMatch2, operators=operators,
+                values.ContainmentMatch, operators=operators,
                 element_func=_mk_required_use_node, attr='REQUIRED_USE')
     return conditionals.DepSet()
 

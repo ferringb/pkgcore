@@ -16,7 +16,7 @@ from snakeoil.demandload import demand_compile_regexp
 from pkgcore.ebuild import cpv, errors, restricts
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.restrictions.packages import Conditional, AndRestriction as PkgAndRestriction
-from pkgcore.restrictions.values import ContainmentMatch2
+from pkgcore.restrictions.values import ContainmentMatch
 
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
@@ -646,7 +646,7 @@ class transitive_use_atom(atom):
 
     @staticmethod
     def _mk_conditional(flag, payload, negate=False):
-        return Conditional('use', ContainmentMatch2(flag, negate=negate), payload)
+        return Conditional('use', ContainmentMatch(flag, negate=negate), payload)
 
     def _recurse_transitive_use_conds(self, atom_str, forced_use, varied):
         if not varied:
