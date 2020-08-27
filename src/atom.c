@@ -14,7 +14,6 @@
 
 // exceptions, loaded during initialization.
 static PyObject *pkgcore_atom_MalformedAtom_Exc = NULL;
-static PyObject *pkgcore_atom_InvalidCPV_Exc = NULL;
 
 // restricts.
 static PyObject *pkgcore_atom_VersionMatch = NULL;
@@ -25,11 +24,7 @@ static PyObject *pkgcore_atom_CategoryDep = NULL;
 static PyObject *pkgcore_atom_PackageDep = NULL;
 static PyObject *pkgcore_atom_mk_use = NULL;
 static PyObject *pkgcore_atom_PackageRestrict = NULL;
-static PyObject *pkgcore_atom_StrExactMatch = NULL;
 static PyObject *pkgcore_atom_StrGlobMatch = NULL;
-static PyObject *pkgcore_atom_ContainmentMatch = NULL;
-static PyObject *pkgcore_atom_ValOr = NULL;
-static PyObject *pkgcore_atom_ValAnd = NULL;
 
 // ops.
 static PyObject *pkgcore_atom_op_gt = NULL;
@@ -56,7 +51,6 @@ static PyObject *pkgcore_atom_slot = NULL;
 static PyObject *pkgcore_atom_subslot = NULL;
 static PyObject *pkgcore_atom_slot_operator = NULL;
 static PyObject *pkgcore_atom_repo_id = NULL;
-static PyObject *pkgcore_atom_restrict_repo_id = NULL;
 static PyObject *pkgcore_atom_blocks = NULL;
 static PyObject *pkgcore_atom_blocks_strongly = NULL;
 static PyObject *pkgcore_atom_op = NULL;
@@ -965,7 +959,6 @@ init_atom(void)
 	snakeoil_LOAD_MODULE(tmp, "pkgcore.ebuild.cpv");
 	snakeoil_LOAD_ATTR(pkgcore_atom_cpv_parse_unversioned, tmp, "unversioned_CPV");
 	snakeoil_LOAD_ATTR(pkgcore_atom_cpv_parse_versioned, tmp, "versioned_CPV");
-	snakeoil_LOAD_ATTR(pkgcore_atom_InvalidCPV_Exc, tmp, "InvalidCPV");
 	Py_CLEAR(tmp);
 
 	snakeoil_LOAD_MODULE(tmp, "pkgcore.ebuild.restricts");
@@ -979,11 +972,7 @@ init_atom(void)
 	Py_CLEAR(tmp);
 
 	snakeoil_LOAD_MODULE(tmp, "pkgcore.restrictions.values");
-	snakeoil_LOAD_ATTR(pkgcore_atom_StrExactMatch, tmp, "StrExactMatch");
 	snakeoil_LOAD_ATTR(pkgcore_atom_StrGlobMatch, tmp, "StrGlobMatch");
-	snakeoil_LOAD_ATTR(pkgcore_atom_ContainmentMatch, tmp, "ContainmentMatch");
-	snakeoil_LOAD_ATTR(pkgcore_atom_ValAnd, tmp, "AndRestriction");
-	snakeoil_LOAD_ATTR(pkgcore_atom_ValOr, tmp, "OrRestriction");
 	Py_CLEAR(tmp);
 
 	snakeoil_LOAD_SINGLE_ATTR(pkgcore_atom_PackageRestrict, "pkgcore.restrictions.packages",
@@ -1004,8 +993,6 @@ init_atom(void)
 	snakeoil_LOAD_STRING(pkgcore_atom_subslot,	  "subslot");
 	snakeoil_LOAD_STRING(pkgcore_atom_slot_operator, "slot_operator");
 	snakeoil_LOAD_STRING(pkgcore_atom_repo_id,	   "repo_id");
-	snakeoil_LOAD_STRING(pkgcore_atom_restrict_repo_id,
-											"repo.repo_id");
 	snakeoil_LOAD_STRING(pkgcore_atom_op_glob,	   "=*");
 	snakeoil_LOAD_STRING(pkgcore_atom_blocks,		"blocks");
 	snakeoil_LOAD_STRING(pkgcore_atom_blocks_strongly,"blocks_strongly");
