@@ -301,11 +301,10 @@ class WeirdSection(basics.ConfigSection):
             raise KeyError(name)
         if arg_type != "repr":
             raise errors.ConfigurationError(f"{arg_type!r} unsupported")
-        return "refs", [
+        return (
+            "refs",
             ["spork", basics.HardCodedConfigSection({"foo": "bar"})],
-            None,
-            None,
-        ]
+        )
 
 
 class TestDumpUncollapsed(ArgParseMixin):
@@ -343,7 +342,7 @@ class TestDumpUncollapsed(ArgParseMixin):
                 "    nested section 2",
                 "    ================",
                 "    # type: refs",
-                "    'sects.prepend' = ",
+                "    'sects' = ",
                 "        nested section 1",
                 "        ================",
                 "        named section 'spork'",
