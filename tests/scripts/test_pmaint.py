@@ -1,6 +1,9 @@
 from functools import partial
 from io import BytesIO
 
+from snakeoil.formatters import PlainTextFormatter
+from snakeoil.mappings import AttrAccessible
+
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild.cpv import CPV
@@ -9,8 +12,6 @@ from pkgcore.repository import syncable, util
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
 from pkgcore.test.scripts.helpers import ArgParseMixin
-from snakeoil.formatters import PlainTextFormatter
-from snakeoil.mappings import AttrAccessible
 
 Options = AttrAccessible
 
@@ -137,7 +138,7 @@ class TestSync(ArgParseMixin):
             ],
             myrepo=success_section,
         )
-        assert config.repo_config["myrepo"]._syncer.synced
+        assert config.objects.repo_config["myrepo"]._syncer.synced
         self.assertOut(
             [
                 "*** syncing myrepo",
