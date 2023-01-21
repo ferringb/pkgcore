@@ -55,6 +55,16 @@ class TestDomain:
                 (packages.AlwaysTrue, (("X",), ("Y",))),
             ) == self.mk_domain().pkg_use
 
+    def test_use_wildstar_negation(self):
+        (self.pusedir / "a").write_text(
+            """
+            # validate "wipe all that came before" behaviour
+            */* x y -* z
+            """
+        )
+
+        assert ((packages.AlwaysTrue, (("*"), ("z",)))) == self.mk_domain().pkg_use
+
     def test_use_expand_syntax(self):
         (self.pusedir / "a").write_text(
             """
