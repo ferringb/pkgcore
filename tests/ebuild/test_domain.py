@@ -5,6 +5,7 @@ import pytest
 
 from pkgcore.ebuild import domain as domain_mod
 from pkgcore.ebuild import profiles
+from pkgcore.ebuild.atom import atom
 from pkgcore.fs.livefs import iter_scan
 from pkgcore.restrictions import packages
 
@@ -22,6 +23,8 @@ class TestDomain:
         self.pmixin.mk_profile(self.profile_base, str(self.profile1))
         self.pusedir = self.confdir / "package.use"
         self.pusedir.mkdir()
+        self.pkeywordsdir = self.confdir / "package.accept_keywords"
+        self.pkeywordsdir.mkdir()
 
     def mk_domain(self):
         return domain_mod.domain(
@@ -141,3 +144,24 @@ class TestDomain:
         assert () == self.mk_domain().pkg_use
         assert "token x_$z is not a valid use flag" in caplog.text
         caplog.clear()
+
+    @pytest.mark.xfail(
+        reason="token awareness isn't yet implemented for package.keywords"
+    )
+    def test_package_keywords(self):
+        (self.pkeywordsdir / "a").write_text(
+            """
+            dev-util/normal x86 ~amd64
+            # for all of these, verify that it strips the unnecessary tokens.
+            dev-util/stable x86 *
+            dev-util/unstable ~* x64
+            dev-util/always amd64 ** x
+            """
+        )
+        keys = self.mk_domain().pkg_accept_keywords
+        assert keys == (
+            (atom("dev-util/normal"), ("x86", "~amd64")),
+            (atom("dev-util/test-stable"), ("*",)),
+            (atom("dev-util/test-unstable"), ("~*")),
+            (atom("dev-util/test-unstable"), ("**")),
+        )
