@@ -44,7 +44,6 @@ from ..util.parserestrict import ParseError, parse_match
 from . import const
 from . import repository as ebuild_repo
 from .atom import atom as _atom
-from .eapi import get_latest_PMS_eapi
 from .misc import (
     ChunkedDataDict,
     chunked_data,
@@ -87,31 +86,21 @@ def package_use_splitter(iterable):
     USE_EXPAND target and should be expanded into their normalized/long form.
     """
 
-    eapi_obj = get_latest_PMS_eapi()
-
     def f(tokens: list[str]):
-
         i = iter(tokens)
-        for idx, flag in enumerate(i):
-            if flag.endswith(":"):
+        for idx, x in enumerate(i):
+            if x.endswith(":"):
                 # we encountered `USE_EXPAND:` , thus all following tokens
                 # are values of that.
-                x = flag.lower()[:-1]
+                x = x.lower()[:-1]
                 l = tokens[0:idx]
                 for flag in i:
-                    if flag.endswith(":"):
-                        x = flag.lower()[:-1]
-                        continue
                     if flag.startswith("-"):
                         flag = f"-{x}_{flag[1:]}"
                     else:
                         flag = f"{x}_{flag}"
-                    if not eapi_obj.is_valid_use_flag(flag.lstrip("-")):
-                        raise ParseError(f"token {flag} is not a valid use flag")
                     l.append(flag)
                 return l
-            elif not eapi_obj.is_valid_use_flag(flag.lstrip("-")):
-                raise ParseError(f"token {flag} is not a valid use flag")
         # if we made it here, there's no USE_EXPAND; thus just return the original sequence
         return tokens
 
