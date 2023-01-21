@@ -69,11 +69,11 @@ def package_masks(iterable):
 
 def restriction_payload_splitter(iterable, post_process=lambda x: x):
     for line, lineno, path in iterable:
-        pkg, *flags = line.split()
+        v = line.split()
         try:
             # TODO: expand this invocation to allow threading token level validation down.
             # things like "is this a valid use flag?"
-            yield parse_match(pkg), tuple(post_process(flags)), line, lineno, path
+            yield parse_match(v[0]), tuple(post_process(v[1:])), line, lineno, path
         except ParseError as e:
             logger.warning(f"{path!r}, line {lineno}: parsing error: {e}")
 
@@ -90,40 +90,30 @@ def package_use_splitter(iterable):
     eapi_obj = get_latest_PMS_eapi()
 
     def f(tokens: list[str]):
-        start_idx = 0
+
         i = iter(tokens)
         for idx, flag in enumerate(i):
-            if flag == "-*":
-                start_idx = idx
-            elif flag.endswith(":"):
+            if flag.endswith(":"):
                 # we encountered `USE_EXPAND:` , thus all following tokens
                 # are values of that.
-                use_expand = flag.lower()[:-1]
-                yield from tokens[start_idx:idx]
-                buffer: list[str] = []
+                x = flag.lower()[:-1]
+                l = tokens[0:idx]
                 for flag in i:
                     if flag.endswith(":"):
-                        use_expand = flag.lower()[:-1]
-                        yield from buffer
-                        buffer.clear()
-                        continue
-                    if flag == "-*":
-                        buffer.clear()
-                        yield f"-{use_expand}_*"
+                        x = flag.lower()[:-1]
                         continue
                     if flag.startswith("-"):
-                        flag = f"-{use_expand}_{flag[1:]}"
+                        flag = f"-{x}_{flag[1:]}"
                     else:
-                        flag = f"{use_expand}_{flag}"
+                        flag = f"{x}_{flag}"
                     if not eapi_obj.is_valid_use_flag(flag.lstrip("-")):
                         raise ParseError(f"token {flag} is not a valid use flag")
-                    buffer.append(flag)
-                yield from buffer
-                return
+                    l.append(flag)
+                return l
             elif not eapi_obj.is_valid_use_flag(flag.lstrip("-")):
                 raise ParseError(f"token {flag} is not a valid use flag")
         # if we made it here, there's no USE_EXPAND; thus just return the original sequence
-        yield from tokens[start_idx:]
+        return tokens
 
     return restriction_payload_splitter(iterable, post_process=f)
 
@@ -610,8 +600,10 @@ class domain(config_domain):
 
     @klass.jit_attr_none
     def use_expand_re(self):
-        expands = "|".join(x.lower() for x in self.profile.use_expand)
-        return re.compile(rf"^(?:[+-])?({expands})_(.*)$")
+        return re.compile(
+            "^(?:[+-])?(%s)_(.*)$"
+            % "|".join(x.lower() for x in self.profile.use_expand)
+        )
 
     def _split_use_expand_flags(self, use_stream):
         stream = ((self.use_expand_re.match(x), x) for x in use_stream)
