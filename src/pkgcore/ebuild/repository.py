@@ -378,6 +378,7 @@ class UnconfiguredTree(prototype.tree):
         )
         self._shared_pkg_cache = WeakValueDictionary()
         self._bad_masked = RestrictionRepo(repo_id="bad_masked")
+        self._valid_cached: set[str] = set()
         self.projects_xml = repo_objs.LocalProjectsXml(
             pjoin(self.location, "metadata", "projects.xml")
         )
@@ -578,7 +579,7 @@ class UnconfiguredTree(prototype.tree):
             except StopIteration:
                 return
 
-            if raw:
+            if raw or pkg.cpvstr in self._valid_cached:
                 yield pkg
             elif (
                 self._bad_masked.has_match(pkg.versioned_atom)
@@ -605,6 +606,7 @@ class UnconfiguredTree(prototype.tree):
                     if error_callback is not None:
                         error_callback(e)
                     continue
+                self._valid_cached.add(pkg.cpvstr)
                 yield pkg
 
     def itermatch(self, *args, **kwargs):
