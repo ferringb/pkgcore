@@ -13,7 +13,7 @@ files.
 Finally, a portageq compatible interface is provided for several commands that
 were historically used in ebuilds.
 """
-
+import abc
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from itertools import groupby, islice
@@ -73,34 +73,22 @@ def pkgsets_run(opts, out, err):
     return 0
 
 
-def print_simple_histogram(
-    data, out, format, total, sort_by_key=False, first=None, last=None
-):
-    # do the division up front...
-    total = float(total) / 100
+class HistoDataParser(arghparse.ArgparseCommand, metaclass=abc.ABCMeta):
+    """ArgumentParser for outputting histogram like output"""
 
-    if sort_by_key:
-        data = sorted(data.items(), key=itemgetter(0))
-    else:
-        data = sorted(data.items(), key=itemgetter(1), reverse=True)
-
-    if first:
-        data = islice(data, 0, first)
-    elif last:
-        data = list(data)[-last:]
-
-    for key, val in data:
-        out.write(
-            format
-            % {"key": str(key), "val": val, "percent": "%2.2f%%" % (val / total,)}
-        )
-
-
-class histo_data(arghparse.ArgparseCommand):
     per_repo_summary = None
     allow_no_detail = False
 
-    def bind_to_parser(self, parser):
+    @staticmethod
+    def bind_class_to_parser(parser: commandline.ArgumentParser, *args, **kwargs):
+        def f(cls):
+            # return the class so it's defined in module, but bind an instantiated in the process
+            parser.bind_class(cls(*args, **kwargs))
+            return cls
+
+        return f
+
+    def bind_to_parser(self, parser: commandline.ArgumentParser):
         mux = parser.add_mutually_exclusive_group()
         mux.add_argument(
             "--no-final-summary",
@@ -164,8 +152,32 @@ class histo_data(arghparse.ArgparseCommand):
 
         arghparse.ArgparseCommand.bind_to_parser(self, parser)
 
+    @abc.abstractmethod
     def get_data(self, repo, options):
         raise NotImplementedError()
+
+    @staticmethod
+    def print_simple_histogram(
+        data, out, format, total, sort_by_key=False, first=None, last=None
+    ):
+        # do the division up front...
+        total = float(total) / 100
+
+        if sort_by_key:
+            data = sorted(data.items(), key=itemgetter(0))
+        else:
+            data = sorted(data.items(), key=itemgetter(1), reverse=True)
+
+        if first:
+            data = islice(data, 0, first)
+        elif last:
+            data = list(data)[-last:]
+
+        for key, val in data:
+            out.write(
+                format
+                % {"key": str(key), "val": val, "percent": "%2.2f%%" % (val / total,)}
+            )
 
     def transform_data_to_detail(self, data):
         return data
@@ -189,7 +201,7 @@ class histo_data(arghparse.ArgparseCommand):
                 if not data:
                     out.write("no pkgs found")
                 else:
-                    print_simple_histogram(
+                    self.print_simple_histogram(
                         detail_data,
                         out,
                         self.per_repo_format,
@@ -218,7 +230,7 @@ class histo_data(arghparse.ArgparseCommand):
             out.write()
             out.write(out.bold, "summary", out.reset, ":")
             out.first_prefix.append("  ")
-            print_simple_histogram(
+            self.print_simple_histogram(
                 global_stats,
                 out,
                 self.summary_format,
@@ -229,7 +241,13 @@ class histo_data(arghparse.ArgparseCommand):
         return 0
 
 
-class eapi_usage_kls(histo_data):
+eapi_usage = subparsers.add_parser(
+    "eapi_usage", description="report of eapi usage for targeted repos"
+)
+
+
+@HistoDataParser.bind_class_to_parser(eapi_usage)
+class eapi_usage_kls(HistoDataParser):
     per_repo_format = "eapi: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "eapi: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -243,13 +261,13 @@ class eapi_usage_kls(histo_data):
         return eapis, pos + 1
 
 
-eapi_usage = subparsers.add_parser(
-    "eapi_usage", description="report of eapi usage for targeted repos"
+license_usage = subparsers.add_parser(
+    "license_usage", description="report of license usage for targeted repos"
 )
-eapi_usage.bind_class(eapi_usage_kls())
 
 
-class license_usage_kls(histo_data):
+@HistoDataParser.bind_class_to_parser(license_usage)
+class license_usage_kls(HistoDataParser):
     per_repo_format = "license: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "license: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -264,13 +282,13 @@ class license_usage_kls(histo_data):
         return data, pos + 1
 
 
-license_usage = subparsers.add_parser(
-    "license_usage", description="report of license usage for targeted repos"
+eclass_usage = subparsers.add_parser(
+    "eclass_usage", description="report of eclass usage for targeted repos"
 )
-license_usage.bind_class(license_usage_kls())
 
 
-class eclass_usage_kls(histo_data):
+@HistoDataParser.bind_class_to_parser(eclass_usage)
+class eclass_usage_kls(HistoDataParser):
     per_repo_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -283,13 +301,13 @@ class eclass_usage_kls(histo_data):
         return data, pos + 1
 
 
-eclass_usage = subparsers.add_parser(
-    "eclass_usage", description="report of eclass usage for targeted repos"
+mirror_usage = subparsers.add_parser(
+    "mirror_usage", description="report of SRC_URI mirror usage for targeted repos"
 )
-eclass_usage.bind_class(eclass_usage_kls())
 
 
-class mirror_usage_kls(histo_data):
+@HistoDataParser.bind_class_to_parser(mirror_usage)
+class mirror_usage_kls(HistoDataParser):
     per_repo_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -308,13 +326,14 @@ class mirror_usage_kls(histo_data):
         return data, pos + 1
 
 
-mirror_usage = subparsers.add_parser(
-    "mirror_usage", description="report of SRC_URI mirror usage for targeted repos"
+distfiles_usage = subparsers.add_parser(
+    "distfiles_usage",
+    description="report detailing distfiles space usage for targeted repos",
 )
-mirror_usage.bind_class(mirror_usage_kls())
 
 
-class distfiles_usage_kls(histo_data):
+@HistoDataParser.bind_class_to_parser(distfiles_usage)
+class distfiles_usage_kls(HistoDataParser):
     per_repo_format = (
         "package: %(key)r %(val)s bytes, referencing %(percent)s of the unique total"
     )
@@ -326,7 +345,7 @@ class distfiles_usage_kls(histo_data):
     allow_no_detail = True
 
     def bind_to_parser(self, parser):
-        histo_data.bind_to_parser(self, parser)
+        HistoDataParser.bind_to_parser(self, parser)
         parser.add_argument(
             "--include-nonmirrored",
             action="store_true",
@@ -368,12 +387,6 @@ class distfiles_usage_kls(histo_data):
     def transform_data_to_summary(self, data):
         return data[1]
 
-
-distfiles_usage = subparsers.add_parser(
-    "distfiles_usage",
-    description="report detailing distfiles space usage for targeted repos",
-)
-distfiles_usage.bind_class(distfiles_usage_kls())
 
 query = subparsers.add_parser(
     "query", description="auxiliary access to ebuild/repo info via portageq akin api"
