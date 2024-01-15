@@ -36,11 +36,7 @@ argparser = commandline.ArgumentParser(
 subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser("pkgsets", description="pkgset related introspection")
-mux = pkgsets.add_mutually_exclusive_group()
-mux.add_argument(
-    "--all", action="store_true", default=False, help="display info on all pkgsets"
-)
-mux.add_argument(
+pkgsets.add_argument(
     "pkgsets",
     nargs="*",
     metavar="pkgset",
@@ -50,7 +46,6 @@ mux.add_argument(
     store_name=True,
     help="pkgset to inspect",
 )
-del mux
 
 
 @pkgsets.bind_main_func
