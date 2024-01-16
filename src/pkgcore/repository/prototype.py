@@ -7,7 +7,7 @@ __all__ = ("CategoryLazyFrozenSet", "PackageMapping", "VersionMapping", "tree")
 from pathlib import Path
 import typing
 
-from snakeoil.klass import jit_attr
+from snakeoil.klass import jit_attr, jit_attr_none, alias_method
 from snakeoil.mappings import DictMixin, LazyValDict
 from snakeoil.sequences import iflatten_instance
 
@@ -25,17 +25,14 @@ class CategoryLazyFrozenSet:
 
     def __init__(self, get_values: typing.Callable[[], typing.Iterable[str]]):
         self._get_values = get_values
-        self._values = None  # type: typing.Union[None, frozenset]
 
-    def __iter__(self):
-        if self._values is None:
-            self._values = frozenset(self._get_values())
-        return iter(self._values)
+    @jit_attr_none
+    def values(self):
+        return frozenset(self._get_values())
 
-    def __contains__(self, cat: str) -> bool:
-        if self._values is None:
-            self._values = frozenset(self._get_values())
-        return cat in self._values
+    __iter__ = alias_method("values.__iter__")
+    __contains__ = alias_method("values.__contains__")
+    __len__ = alias_method("values.__len__")
 
     def force_regen(self):
         """wipe cached values to trigger a refresh"""
