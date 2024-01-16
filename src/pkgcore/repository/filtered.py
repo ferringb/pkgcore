@@ -5,12 +5,15 @@ filtering repository
 __all__ = ("tree",)
 
 from itertools import filterfalse
+import typing
 
 from snakeoil.klass import DirProxy, GetAttrProxy
 
 from ..operations.repo import operations_proxy
 from ..restrictions import restriction
 from . import errors, prototype
+from pkgcore.ebuild.restricts import CategoryDep
+from pkgcore.ebuild.atom import atom
 
 
 class tree(prototype.tree):
@@ -33,6 +36,7 @@ class tree(prototype.tree):
             self._filterfunc = filter
         else:
             self._filterfunc = filterfalse
+        super().__init__()
 
     def itermatch(self, restrict, **kwds):
         # note that this lets the repo do the initial filtering.
@@ -53,6 +57,24 @@ class tree(prototype.tree):
         for i in self:
             count += 1
         return count
+
+    # note: for the _get_* methods they use itermatch which would typically
+    # be a cycle; this class's itermatch is fully reliant on the raw repo
+    # thus no cycle.
+
+    def _get_categories(self) -> typing.Iterable[str]:
+        # check the filter for each of the wrapped repo's categories
+        for category in self.raw_repo.categories:
+            if any(self.itermatch(CategoryDep(category))):
+                yield category
+
+    def _get_packages(self, category: str) -> typing.Iterable[str]:
+        for package in self.raw_repo.packages[category]:
+            if any(self.itermatch(atom(f"{category}/{package}"))):
+                yield package
+
+    def _get_versions(self, catpkg: tuple[str, str]) -> typing.Iterable[str]:
+        return (pkg.fullver for pkg in self.itermatch(atom(f"{catpkg[0]}/{catpkg[1]}")))
 
     __getattr__ = GetAttrProxy("raw_repo")
     __dir__ = DirProxy("raw_repo")
