@@ -14,9 +14,10 @@ Finally, a portageq compatible interface is provided for several commands that
 were historically used in ebuilds.
 """
 import abc
+import collections
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from itertools import groupby, islice
+from itertools import groupby, islice, chain
 from operator import attrgetter, itemgetter
 
 from snakeoil.cli import arghparse
@@ -469,3 +470,38 @@ def digest_manifest(options, out, err):
             out.write("repo has no packages")
 
         out.write()
+
+
+categories = subparsers.add_parser(
+    "categories", domain=True, description="functionality related to categories"
+).add_subparsers(description="commands")
+categories_list = categories.add_parser("list", description="list the categories")
+categories_list.add_argument(
+    "repos",
+    nargs="*",
+    help="repo to inspect",
+    action=commandline.StoreRepoObject,
+    allow_external_repos=True,
+    store_name=True,
+)
+
+
+@categories_list.bind_main_func
+def categories_list_func(options, out, err):
+    for category in sorted(set(chain(*[repo[1].categories for repo in options.repos]))):
+        out.write(category)
+
+
+categories_packages_usage = categories.add_parser(
+    "usage",
+    description="output a count of the number of packages in each category",
+)
+
+
+@HistoDataParser.bind_class_to_parser(categories_packages_usage)
+class CategoriesUsage(HistoDataParser):
+    per_repo_format = "%(key)s: %(val)s packages"
+
+    def get_data(self, repo, options):
+        d = {cat: len(pkgs) for (cat, pkgs) in repo.packages.items()}
+        return d, sum(d.values())
