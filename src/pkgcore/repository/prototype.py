@@ -32,7 +32,7 @@ class CategoryLazyFrozenSet:
             self._values = frozenset(self._get_values())
         return iter(self._values)
 
-    def __contains__(self, cat: str):
+    def __contains__(self, cat: str) -> bool:
         if self._values is None:
             self._values = frozenset(self._get_values())
         return cat in self._values
@@ -60,8 +60,8 @@ class PackageMapping(DictMixin):
     def keys(self):
         return iter(self._parent)
 
-    def __contains__(self, key):
-        return key in self._cache or key in self._parent
+    def __contains__(self, key: str) -> bool:
+        return key in self._parent
 
     def force_regen(self, cat):
         self._cache.pop(cat, None)
@@ -82,6 +82,12 @@ class VersionMapping(DictMixin):
         val = tuple(self._pull_vals(key))
         self._cache[key] = val
         return val
+
+    def __contains__(self, item: tuple[str, str]) -> bool:
+        try:
+            return item[1] in self._parent[item[0]]
+        except KeyError:
+            return False
 
     def keys(self):
         for cat, pkgs in self._parent.items():
