@@ -3,8 +3,36 @@ from unittest import mock
 
 import pytest
 from pkgcore.const import EBD_PATH
-from pkgcore.ebuild import eapi
-from pkgcore.ebuild.eapi import EAPI, eapi6, get_eapi
+from pkgcore.ebuild import eapi as eapi_mod
+from pkgcore.ebuild.eapi import EAPI, get_eapi
+
+
+# Seperate these so we can test the fixture implementation.
+def _protect_eapi_registration():
+    """Protect EAPI.known_eapi so any test manipulations can't persist"""
+    prior = EAPI.known_eapis.copy()
+    yield
+    EAPI.known_eapis.clear()
+    EAPI.known_eapis.update(prior)
+
+
+protect_eapi_registration = pytest.fixture(scope="function", autouse=True)(
+    _protect_eapi_registration
+)
+
+
+def test_eapi_registry_fixture():
+    prior = set(list(EAPI.known_eapis))
+    fixture = _protect_eapi_registration()
+    # start the fixture
+    next(fixture)
+    assert prior == set(EAPI.known_eapis), EAPI.known_eapis
+    # known_eapis is a weakval dict, thus we have to hold the reference
+    _x = EAPI.register("foon")
+    assert len(EAPI.known_eapis) - 1 == len(prior)
+    # finish the fixture via exausting the iterator
+    list(fixture)
+    assert set(EAPI.known_eapis) == prior
 
 
 def test_get_eapi():
@@ -15,11 +43,49 @@ def test_get_eapi():
     assert unknown_eapi == get_eapi("unknown")
 
     # known EAPI
-    eapi = get_eapi("6")
-    assert eapi6 == eapi
+    assert get_eapi("6") == eapi_mod.eapi6
+
+
+def test_get_PMS_eapi():
+    # test PMS filtration
+    assert get_eapi("6") is eapi_mod.eapi6
+    # hold the reference, known_eapis is weakval
+    temp = EAPI.register("1234")
+    # confirm it's visable
+    assert get_eapi("1234", suppress_unsupported=False) is temp
+    assert eapi_mod.get_PMS_eapi("1234") is None
+    temp2 = EAPI.register("9999", pms=True)
+    assert eapi_mod.get_PMS_eapi("9999") is temp2
+
+
+def test_get_PMS_eapis():
+    pms_eapis = set(eapi_mod.get_PMS_eapis())
+    expected = set(x for x in EAPI.known_eapis.values() if x.pms)
+    assert pms_eapis == expected
+
+
+def test_get_latest_pms_eapi():
+    # if it's not in there, the magic constant isn't in alignment
+    assert eapi_mod.get_latest_PMS_eapi() in list(eapi_mod.get_PMS_eapis())
+
+    # Note, this can false positive while a new  EAPI is being developed.  If this
+    # is an actual issue, then introduce a flag on EAPI objects that indicates 'latest pms',
+    # and update get_latest_PMS_eapi to scan for that, and register() to block duplicate.
+    assert (
+        eapi_mod.get_latest_PMS_eapi()
+        is sorted(
+            (x for x in EAPI.known_eapis.values() if x.pms),
+            key=lambda e: int(e._magic),
+            reverse=True,
+        )[0]
+    )
 
 
 class TestEAPI:
+    def test_pms_default_off(self):
+        assert EAPI("asdf").pms == False
+        assert EAPI.register("asdf").pms == False
+
     def test_register(self, tmp_path):
         # re-register known EAPI
         with pytest.raises(ValueError):
@@ -28,7 +94,7 @@ class TestEAPI:
         mock_ebd_temp = str(shutil.copytree(EBD_PATH, tmp_path / "ebd"))
         with (
             mock.patch("pkgcore.ebuild.eapi.bash_version") as bash_version,
-            mock.patch.dict(eapi.EAPI.known_eapis),
+            mock.patch.dict(eapi_mod.EAPI.known_eapis),
             mock.patch("pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp),
         ):
             # inadequate bash version
@@ -49,11 +115,11 @@ class TestEAPI:
             assert test_eapi._magic == "test1"
 
     def test_is_supported(self, tmp_path, caplog):
-        assert eapi6.is_supported
+        assert eapi_mod.eapi6.is_supported
 
         mock_ebd_temp = str(shutil.copytree(EBD_PATH, tmp_path / "ebd"))
         with (
-            mock.patch.dict(eapi.EAPI.known_eapis),
+            mock.patch.dict(eapi_mod.EAPI.known_eapis),
             mock.patch("pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp),
         ):
             # partially supported EAPI is flagged as such

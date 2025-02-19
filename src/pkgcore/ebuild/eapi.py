@@ -12,6 +12,8 @@ from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
 
+from typing import Iterable
+
 LATEST_PMS_EAPI_VER = "9"
 
 
@@ -155,6 +157,7 @@ class EAPI(metaclass=klass.immutable_instance):
         archive_exts=(),
         optionals=None,
         ebd_env_options=None,
+        pms=False,
     ):
         sf = object.__setattr__
 
@@ -194,6 +197,7 @@ class EAPI(metaclass=klass.immutable_instance):
         if ebd_env_options is None:
             ebd_env_options = ()
         sf(self, "_ebd_env_options", ebd_env_options)
+        sf(self, "pms", pms)
 
     @classmethod
     def register(cls, *args, **kwds):
@@ -373,9 +377,7 @@ class EAPI(metaclass=klass.immutable_instance):
                         stdout=f,
                     )
             except (IOError, subprocess.CalledProcessError) as e:
-                raise Exception(
-                    f"failed to generate EAPI '{self}' global lib: {str(e)}"
-                )
+                raise Exception(f"failed to generate EAPI '{self}'") from e
 
         for phase in self.phases.values():
             eapi_lib = pjoin(const.EBD_PATH, ".generated", "libs", self._magic, phase)
@@ -390,8 +392,8 @@ class EAPI(metaclass=klass.immutable_instance):
                         )
                 except (IOError, subprocess.CalledProcessError) as e:
                     raise Exception(
-                        f"failed to generate EAPI '{self}' phase {phase} lib: {str(e)}"
-                    )
+                        f"failed to generate EAPI '{self}' phase {phase}"
+                    ) from e
 
     @klass.jit_attr
     def archive_exts_regex_pattern(self):
@@ -479,8 +481,13 @@ class EAPI(metaclass=klass.immutable_instance):
         return _valid_use_flag.match(s) is not None
 
 
-def get_eapi(magic, suppress_unsupported=True):
-    """Return EAPI object for a given identifier."""
+def get_eapi(magic, suppress_unsupported=True) -> None | EAPI:
+    """Return EAPI object for a given identifier.
+
+    If given suppress_unsupported, generate a fake EAPI and return that.
+    Use sparingly, this implicitly means pkgcore doesn't know the rules
+    for that metadata- so it's likely going to be wrong.
+    """
     if _valid_EAPI_regex.match(magic) is None:
         eapi_str = f" {magic!r}" if magic else ""
         raise ValueError(f"invalid EAPI{eapi_str}")
@@ -490,7 +497,19 @@ def get_eapi(magic, suppress_unsupported=True):
         if eapi is None:
             eapi = EAPI(magic=magic, optionals={"is_supported": False})
             EAPI.unknown_eapis[eapi._magic] = eapi
+
     return eapi
+
+
+def get_PMS_eapi(magic) -> None | EAPI:
+    """If a PMS EAPI is supported, return it."""
+    eapi = get_eapi(magic, suppress_unsupported=False)
+    return eapi if eapi.pms else None
+
+
+def get_PMS_eapis() -> Iterable[EAPI]:
+    """Returns all known EAPIs that are defined by PMS"""
+    return (eapi for eapi in EAPI.known_eapis.values() if eapi.pms)
 
 
 def _shorten_phase_name(func_name):
@@ -633,6 +652,7 @@ eapi0 = EAPI.register(
     archive_exts=common_archive_exts,
     optionals=eapi_optionals,
     ebd_env_options=common_env_optionals,
+    pms=True,
 )
 
 eapi1 = EAPI.register(
@@ -654,6 +674,7 @@ eapi1 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi0._ebd_env_options,
+    pms=True,
 )
 
 eapi2 = EAPI.register(
@@ -682,6 +703,7 @@ eapi2 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi1._ebd_env_options,
+    pms=True,
 )
 
 eapi3 = EAPI.register(
@@ -702,6 +724,7 @@ eapi3 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi2._ebd_env_options,
+    pms=True,
 )
 
 eapi4 = EAPI.register(
@@ -731,6 +754,7 @@ eapi4 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi3._ebd_env_options,
+    pms=True,
 )
 
 eapi5 = EAPI.register(
@@ -757,6 +781,7 @@ eapi5 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi4._ebd_env_options,
+    pms=True,
 )
 
 eapi6 = EAPI.register(
@@ -782,6 +807,7 @@ eapi6 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi5._ebd_env_options,
+    pms=True,
 )
 
 eapi7 = EAPI.register(
@@ -810,6 +836,7 @@ eapi7 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi6._ebd_env_options,
+    pms=True,
 )
 
 eapi8 = EAPI.register(
@@ -846,6 +873,7 @@ eapi8 = EAPI.register(
         ),
     ),
     ebd_env_options=eapi7._ebd_env_options,
+    pms=True,
 )
 
 eapi9 = EAPI.register(
@@ -863,4 +891,5 @@ eapi9 = EAPI.register(
         eapi8.options, dict(bash_compat="5.2", is_supported=False)
     ),
     ebd_env_options=eapi8._ebd_env_options,
+    pms=True,
 )

@@ -3,9 +3,13 @@ PYTHONPATH ?= ../../../../src
 PYTHON_CALL = PYTHONPATH="$(PYTHONPATH)" PYTHONDONTWRITEBYTECODE=1 $(PYTHON)
 
 TARGET = .generated
-KNOWN_EAPI = 0 1 2 3 4 5 6 7 8 9
+KNOWN_EAPI = $(shell $(PYTHON_CALL) -c 'from pkgcore.ebuild.eapi import EAPI; print(" ".join(EAPI.known_eapis))')
 
 all: funcs cmds libs
+
+.PHONY: eapis
+eapis:
+	@echo $(KNOWN_EAPI)
 
 clean:
 	$(RM) -r $(TARGET)
