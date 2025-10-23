@@ -23,7 +23,7 @@ from snakeoil.cli import arghparse
 from snakeoil.sequences import iflatten_instance, unstable_unique
 
 from .. import fetch
-from ..ebuild import inspect_profile
+from ..ebuild import inspect_profile, eapi
 from ..ebuild import portageq as _portageq
 from ..package import errors
 from ..restrictions import packages
@@ -232,6 +232,43 @@ class histo_data(arghparse.ArgparseCommand):
             )
             out.first_prefix.pop()
         return 0
+
+
+eapi_subparser = subparsers.add_parser(
+    "eapi", description="EAPI related functionality"
+).add_subparsers()
+
+eapi_list = eapi_subparser.add_parser(
+    "list", description="list all EAPIs pkgcore knows"
+)
+
+eapi_list.add_argument(
+    "--pms", action="store_true", default=False, help="Filter to just PMS EAPIS"
+)
+
+
+@eapi_list.bind_main_func
+def eapi_list(opts, out, _err):
+    out.write(
+        "\n".join(
+            str(magic)
+            for (magic, obj) in eapi.EAPI.known_eapis.items()
+            if obj.pms or not opts.pms
+        )
+    )
+
+
+eapi_phases = eapi_subparser.add_parser(
+    "phases", description="list the phases of a given EAPI"
+)
+eapi_phases.add_argument("eapi", metavar="EAPI", help="the EAPI to inspect")
+
+
+@eapi_phases.bind_main_func
+def eapi_phases(opts, out, err):
+    if not (obj := eapi.EAPI.known_eapis.get(opts.eapi)):
+        raise arghparse.argparse.ArgumentTypeError(f"eapi '{opts.eapi}' is unsupported")
+    out.write("\n".join(sorted(obj.phases.values())))
 
 
 class eapi_usage_kls(histo_data):
