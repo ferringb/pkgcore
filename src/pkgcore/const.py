@@ -47,6 +47,7 @@ for xdg_var, var_name, fallback_dir in (
         var_name,
         os.environ.get(xdg_var, osp.join(osp.expanduser(fallback_dir), __title__)),
     )
+del xdg_var, var_name, fallback_dir
 
 USER_CONF_FILE = osp.join(getattr(_module, "USER_CONFIG_PATH"), "pkgcore.conf")
 SYSTEM_CONF_FILE = "/etc/pkgcore/pkgcore.conf"
