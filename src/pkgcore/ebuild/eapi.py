@@ -454,7 +454,7 @@ class EAPI(metaclass=klass.immutable_instance):
         for eapi in self.inherits:
             paths["global"].append(pjoin(const.EBUILD_HELPERS_PATH, "common"))
             helper_dir = pjoin(const.EBUILD_HELPERS_PATH, eapi._magic)
-            for dirpath, dirnames, filenames in os.walk(helper_dir):
+            for dirpath, _, filenames in os.walk(helper_dir):
                 if not filenames:
                     continue
                 if dirpath == helper_dir:
