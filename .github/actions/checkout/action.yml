@@ -1,0 +1,30 @@
+name: artifact-checkout
+description: Replace the Checkout able to work either from an artifact or a git repo
+
+inputs:
+  artifact-id:
+    description: The artifact-id to download and unpack.  If not given, a standard git checkout is ran
+    required: true
+  path:
+    description: Where to checkout to
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        path: ${{ inputs.path }}
+      if: ! inputs.artifact-id
+    - name: Download artifact
+      id: download
+      if: inputs.artifact-id
+      uses: actions/download-artifact@v5
+      with:
+        artifact-id: ${{ inputs.artifact-id }}
+    - name: Unpack it
+      shell: bash
+      if: inputs.artifact-id
+      run: |
+        tar -C ${{ inputs.path || '.' }} -p1 -zxf "${{ steps.download.outputs.download-path }}"

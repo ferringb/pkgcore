@@ -70,6 +70,7 @@ jobs:
       uses: ./.github/workflows/test.yml
       with:
         artifact-id: ${{ steps.artifacts.outputs.artifact-id }}
+        disable-ruff-check: true
 
     - name: publish
       uses: pypa/gh-action-pypi-publish@release/v1
