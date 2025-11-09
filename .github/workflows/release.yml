@@ -41,12 +41,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build ".[test,doc]"
-
-    - name: Test with pytest
-      env:
-        PY_COLORS: 1 # forcibly enable pytest colors
-      run: pytest
+        pip install build ".[doc]"
 
     - name: Build sdist
       run: |
@@ -60,14 +55,21 @@ jobs:
     - name: Output dist file info
       run: |
         sha512sum dist/*
-        echo ::group::file contents
+        echo ::group::File contents
         tar -ztf dist/*.tar.gz | sort
         echo ::endgroup::
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload artifacts
+      id: artifacts
+      uses: actions/upload-artifact@v5
       with:
         name: dist-${{ github.sha }}.tar.gz
         path: dist/*
+
+    - name: Testing the release
+      uses: ./.github/workflows/_run_tests.yml
+      with:
+        artifact-id: ${{ steps.artifacts.outputs.artifact-id }}
 
     - name: publish
       uses: pypa/gh-action-pypi-publish@release/v1

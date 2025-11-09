@@ -1,0 +1,27 @@
+name: pkgcore-checkout
+description: Checkout able to work either from an artifact or a git repo
+
+inputs:
+  artifact-id:
+    description: The artifact-id to download and unpack.  If not given, a standard git checkout is ran
+    required: false
+
+runs:
+  using: composite
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout git repo
+      uses: actions/checkout@v4
+      if: inputs.artifact-id == ''
+
+    - name: Download artifact
+      id: download
+      if: inputs.artifact-id
+      uses: actions/download-artifact@v5
+      with:
+        artifact-id: ${{ inputs.artifact-id }}
+    - name: Unpack it
+      if: inputs.artifact-id
+      run: |
+        tar -zxf "${{ steps.download.outputs.download-path }}"
+        test -e pkgcore || { echo "no pkgcore directory found in the artifact, bailing"; exit 1; }
