@@ -71,9 +71,9 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
     needs: [build]
-    with:
-        artifact-id: ${{ needs.build.outputs.artifact-id }}
-        disable-ruff-check: true
+#    with:
+#        artifact-id: ${{ needs.build.outputs.artifact-id }}
+#        disable-ruff-check: true
 
   publish:
     runs-on: ubuntu:latest
