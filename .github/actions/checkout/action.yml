@@ -38,8 +38,9 @@ runs:
       shell: bash
       run: |
         set -ex
+        p=${{ inputs.path || '.' }}
         find .
         unzip -e ${{ steps.download.outputs.download-path }}
-        rm ${{ steps.download.outputs.download-path }}
-        tar -C ${{ inputs.path || '.' }} -zxf *.tar.gz
+        [ ! -d "$p" ] || mkdir "$p"
+        tar -C "$p" -zxf *.tar.gz
         rm *.tar.gz
