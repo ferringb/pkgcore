@@ -15,12 +15,10 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: wipe
+    - name: Wipe existing
       shell: bash
       run: |
-        if [ -e "${{ inputs.path }}" ]; then
-          find "${{ inputs.path }}/" -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} \;
-        fi
+        find "${{ inputs.path || "." }}/" -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} \;
     - name: Download artifact
       id: download
       if: inputs.artifact-id

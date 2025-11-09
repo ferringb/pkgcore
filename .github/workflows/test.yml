@@ -17,7 +17,6 @@ on:
         type: string
         default: ''
       disable-ruff-check:
-        required: false
         type: boolean
         default: false
         description: Disable the ruff format check.  This should only be used by release.
@@ -186,7 +185,7 @@ jobs:
 
   format:
     runs-on: ubuntu-latest
-    if: ! inputs.disable-ruff-check
+    if: ! inputs.disable-ruff-check 
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
