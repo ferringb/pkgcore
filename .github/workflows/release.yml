@@ -7,9 +7,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     environment: release
+    outputs:
+      artifact-id: ${{ steps.release-upload.outputs.artifact-id }}
 
     permissions:
       id-token: write # Used to authenticate to PyPI via OIDC
@@ -59,18 +61,34 @@ jobs:
         tar -ztf dist/*.tar.gz | sort
         echo ::endgroup::
 
-    - name: Upload artifacts
-      id: artifacts
+    - name: Upload release artifacts
+      id: release-upload
       uses: actions/upload-artifact@v5
       with:
-        name: dist-${{ github.sha }}.tar.gz
+        name: release-${{ github.sha }}.tar.gz
         path: dist/*
 
-    - name: Testing the release
-      uses: ./.github/workflows/test.yml
-      with:
-        artifact-id: ${{ steps.artifacts.outputs.artifact-id }}
+  test:
+    uses: ./.github/workflows/test.yml
+    needs: [build]
+    with:
+        artifact-id: ${{ needs.build.outputs.artifact-id }}
         disable-ruff-check: true
+
+  publish:
+    runs-on: ubuntu:latest
+    needs:
+      - build
+      - test
+    steps:
+    - name: Get release artifact
+      uses: actions/download-artifact@v4
+      with:
+        artifact-id: ${{ needs.build.outputs.artifact-id }}
+        path: dist/
+
+    - name: test
+      run: ls
 
     - name: publish
       uses: pypa/gh-action-pypi-publish@release/v1
