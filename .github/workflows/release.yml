@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     outputs:
-      artifact-id: steps.release-upload.outputs.artifact-id
+      artifact-id: ${{ steps.release-upload.outputs.artifact-id }}
 
     permissions:
       id-token: write # Used to authenticate to PyPI via OIDC
