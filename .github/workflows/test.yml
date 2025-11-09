@@ -9,11 +9,17 @@ on:
     inputs:
       artifact-id:
         required: false
-        type: number
+        type: string
+        default: ''
         description: The artifact-id to run the tests against.
+      artifact-runner:
+        required: false
+        type: string
+        default: ''
       disable-ruff-check:
         required: false
         type: boolean
+        default: false
         description: Disable the ruff format check.  This should only be used by release.
 jobs:
   build:
@@ -45,6 +51,7 @@ jobs:
       uses: ferringb/pkgcore/.github/actions/checkout@deploy
       with:
         artifact-id: ${{ inputs.artifact-id }}
+        artifact-runner: ${{ inputs.artifact-runner }}
 
     - name: Pin dependencies to minimal versions
       if: ${{ matrix.deps == 'minimal-deps' }}
@@ -92,6 +99,7 @@ jobs:
       with:
         path: pkgcore
         artifact-id: ${{ inputs.artifact-id }}
+        artifact-runner: ${{ inputs.artifact-runner }}
 
     - name: Checkout pkgcheck
       uses: actions/checkout@v4
@@ -127,6 +135,7 @@ jobs:
       uses: ferringb/pkgcore/.github/actions/checkout@deploy
       with:
         artifact-id: ${{ inputs.artifact-id }}
+        artifact-runner: ${{ inputs.artifact-runner }}
         path: pkgcore
 
     - name: Checkout pkgdev
@@ -173,6 +182,7 @@ jobs:
       uses: ferringb/pkgcore/.github/actions/checkout@deploy
       with:
         artifact-id: ${{ inputs.artifact-id }}
+        artifact-runner: ${{ inputs.artifact-runner }}
         path: pkgcore
 
     - name: Checkout gentoo

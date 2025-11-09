@@ -6,7 +6,10 @@ inputs:
     description: The artifact-id to download and unpack.  If not given, a standard git checkout is ran
     required: false
     default: ''
-
+  artifact-runner-id:
+    description: Which runner generated the artifact
+    required: false
+    default: ''
   path:
     description: Where to checkout to
     default: ''
