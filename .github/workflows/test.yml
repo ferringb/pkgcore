@@ -52,6 +52,9 @@ jobs:
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner: ${{ inputs.artifact-runner-id }}
+    
+    - name: results
+      run: ls
 
     - name: Pin dependencies to minimal versions
       if: ${{ matrix.deps == 'minimal-deps' }}
@@ -119,7 +122,7 @@ jobs:
     - name: Install pip dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e "./pkgcore"
+        pip install "./pkgcore"
         pip install "./pkgcheck[test]"
 
     - name: Test with pytest
@@ -156,7 +159,7 @@ jobs:
     - name: Install pip dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e "./pkgcore"
+        pip install "./pkgcore"
         pip install "./pkgdev[test]"
 
     - name: Test with pytest
@@ -199,7 +202,7 @@ jobs:
     - name: Install pip dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e "./pkgcore"
+        pip install "./pkgcore"
 
     - name: Run pmaint regen
       working-directory: ./gentoo
