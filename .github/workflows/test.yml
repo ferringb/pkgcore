@@ -8,7 +8,7 @@ on:
   workflow_call:
     inputs:
       artifact-id:
-        required: true
+        required: false
         type: number
         description: The artifact-id to run the tests against.
       disable-ruff-check:
