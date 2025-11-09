@@ -25,7 +25,7 @@ runs:
         artifact-ids: ${{ inputs.artifact-id }}
     - name: Unpack it
       shell: bash
-      if: inputs.artifact-id || false
+      if: inputs.artifact-id
       run: |
         unzip -e "${{ steps.download.outputs.download-path }}"
         tar -C ${{ inputs.path || '.' }} -p1 -zxf *.tar.gz
