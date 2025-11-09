@@ -19,6 +19,10 @@ runs:
       shell: bash
       run: |
         find "${{ inputs.path || '.' }}/" -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} \;
+    - name: post Wipe
+      shell: bash
+      run: |
+        find .
     - name: Download artifact
       id: download
       if: inputs.artifact-id
