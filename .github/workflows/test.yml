@@ -51,7 +51,7 @@ jobs:
       uses: ferringb/pkgcore/.github/actions/checkout@deploy
       with:
         artifact-id: ${{ inputs.artifact-id }}
-        artifact-runner: ${{ inputs.artifact-runner-id }}
+        artifact-runner-id: ${{ inputs.artifact-runner-id }}
     
     - name: results
       run: ls
