@@ -52,7 +52,7 @@ jobs:
 
     - name: Swap artifact in
       if: inputs.artifact-id
-      uses: .github/actions/checkout
+      uses: ./.github/actions/checkout
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
@@ -108,7 +108,7 @@ jobs:
 
     - name: Swap artifact in
       if: inputs.artifact-id
-      uses: pkgcore/.github/actions/checkout
+      uses: ./pkgcore/.github/actions/checkout
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
@@ -151,7 +151,7 @@ jobs:
 
     - name: Swap artifact in
       if: inputs.artifact-id
-      uses: pkgcore/.github/actions/checkout
+      uses: ./pkgcore/.github/actions/checkout
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
@@ -204,7 +204,7 @@ jobs:
 
     - name: Swap artifact in
       if: inputs.artifact-id
-      uses: pkgcore/.github/actions/checkout
+      uses: ./pkgcore/.github/actions/checkout
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
