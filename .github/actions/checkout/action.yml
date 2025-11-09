@@ -31,6 +31,7 @@ runs:
     - name: unwrap the zip crap
       shell: bash
       run: |
+        find .
         unzip -e ${{ steps.download.outputs.download-path }}
         rm ${{ steps.download.outputs.download-path }}
         tar -C ${{ inputs.path || '.' }} -zxf *.tar.gz
