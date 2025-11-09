@@ -4,7 +4,7 @@ description: Replace the Checkout able to work either from an artifact or a git 
 inputs:
   artifact-id:
     description: The artifact-id to download and unpack.  If not given, a standard git checkout is ran
-    required: true
+    required: false
   path:
     description: Where to checkout to
     default: ''
@@ -16,7 +16,7 @@ runs:
       uses: actions/checkout@v5
       with:
         path: ${{ inputs.path }}
-      if: ! inputs.artifact-id
+      if: inputs.artifact-id || false
     - name: Download artifact
       id: download
       if: inputs.artifact-id
@@ -25,6 +25,6 @@ runs:
         artifact-id: ${{ inputs.artifact-id }}
     - name: Unpack it
       shell: bash
-      if: inputs.artifact-id
+      if: inputs.artifact-id || false
       run: |
         tar -C ${{ inputs.path || '.' }} -p1 -zxf "${{ steps.download.outputs.download-path }}"
