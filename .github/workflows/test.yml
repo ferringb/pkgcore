@@ -38,10 +38,9 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: git+https://github.com./.github/actions/checkout
+      uses: ${{ github.repository }}/.github/actions/checkout@${{ github.ref }}
       with:
         artifact-id: ${{ inputs.artifact-id }}
-      
 
     - name: Pin dependencies to minimal versions
       if: ${{ matrix.deps == 'minimal-deps' }}
