@@ -60,11 +60,13 @@ jobs:
     - name: Output dist file info
       run: |
         sha512sum dist/*
+        echo ::group::file contents
         tar -ztf dist/*.tar.gz | sort
+        echo ::endgroup::
 
     - uses: actions/upload-artifact@v4
       with:
-        name: results
+        name: dist-${{ github.sha }}.tar.gz
         path: dist/*
 
     - name: publish
