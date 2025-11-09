@@ -18,8 +18,9 @@ runs:
     - name: wipe
       shell: bash
       run: |
-        [ -e "${{ inputs.path }}" ] && \
-          find . -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} \;
+        if [ -e "${{ inputs.path }}" ]; then
+          find "${{ inputs.path }}/" -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} \;
+        fi
     - name: Download artifact
       id: download
       if: inputs.artifact-id
