@@ -34,13 +34,4 @@ runs:
       with:
         artifact-ids: ${{ inputs.artifact-id }}
         run-id: ${{ inputs.artifact-runner-id}}
-    - name: unwrap the zip crap
-      shell: bash
-      run: |
-        set -ex
-        p=${{ inputs.path || '.' }}
-        find .
-        unzip -e ${{ steps.download.outputs.download-path }}
-        [ ! -d "$p" ] || mkdir "$p"
-        tar -C "$p" -zxf *.tar.gz
-        rm *.tar.gz
+        path: ${{ inputs.path || '.' }}
