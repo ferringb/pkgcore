@@ -4,12 +4,10 @@ description: Replace the Checkout able to work either from an artifact or a git 
 inputs:
   artifact-id:
     description: The artifact-id to download and unpack.  If not given, a standard git checkout is ran
-    required: false
-    default: ''
+    required: true
   artifact-runner-id:
     description: Which runner generated the artifact
-    required: false
-    default: ''
+    default: ${{ github.runner }}
   path:
     description: Where to checkout to
     default: ''
@@ -17,21 +15,22 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-      with:
-        path: ${{ inputs.path }}
-      if: inputs.artifact-id || false
+    - name: wipe
+      shell: bash
+      run: |
+        [ -e "${{ inputs.path }}" ] && \
+          find . -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} \;
     - name: Download artifact
       id: download
       if: inputs.artifact-id
       uses: actions/download-artifact@v5
       with:
         artifact-ids: ${{ inputs.artifact-id }}
-    - name: Unpack it
+        run-id: ${{ inputs.artifact-runner-id}}
+    - name: unwrap the zip crap
       shell: bash
-      if: inputs.artifact-id
       run: |
-        unzip -e "${{ steps.download.outputs.download-path }}"
-        tar -C ${{ inputs.path || '.' }} -p1 -zxf *.tar.gz
+        unzip -e ${{ steps.download.outputs.download-path }}
+        rm ${{ steps.download.outputs.download-path }}
+        tar -C ${{ inputs.path || '.' }} -zxf *.tar.gz
         rm *.tar.gz

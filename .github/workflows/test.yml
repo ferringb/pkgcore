@@ -48,7 +48,11 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: ferringb/pkgcore/.github/actions/checkout@deploy
+      uses: action/checkout@v5
+
+    - name: Swap artifact in
+      if: inputs.artifact-id
+      uses: .github/actions/checkout
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
@@ -98,11 +102,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: ferringb/pkgcore/.github/actions/checkout@deploy
+      uses: action/checkout@v5
       with:
         path: pkgcore
+
+    - name: Swap artifact in
+      if: inputs.artifact-id
+      uses: pkgcore/.github/actions/checkout
+      with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
+        path: pkgcore
 
     - name: Checkout pkgcheck
       uses: actions/checkout@v4
@@ -135,7 +145,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: ferringb/pkgcore/.github/actions/checkout@deploy
+      uses: action/checkout@v5
+      with:
+        path: pkgcore
+
+    - name: Swap artifact in
+      if: inputs.artifact-id
+      uses: pkgcore/.github/actions/checkout
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
@@ -173,7 +189,7 @@ jobs:
     if: ! inputs.disable-ruff-check
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - uses: astral-sh/ruff-action@v3
       with:
         args: "format --check --diff"
@@ -181,8 +197,14 @@ jobs:
   gentoo-regen:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout pkgcore
-      uses: ferringb/pkgcore/.github/actions/checkout@deploy
+    - name: Checkout code
+      uses: action/checkout@v5
+      with:
+        path: pkgcore
+
+    - name: Swap artifact in
+      if: inputs.artifact-id
+      uses: pkgcore/.github/actions/checkout
       with:
         artifact-id: ${{ inputs.artifact-id }}
         artifact-runner-id: ${{ inputs.artifact-runner-id }}
