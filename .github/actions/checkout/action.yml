@@ -16,8 +16,9 @@ runs:
   using: composite
   steps:
     - name: Wipe existing
-      shell: bash -ex
+      shell: bash
       run: |
+        set -ex
         p=${{ inputs.path || '.' }}/
         if [ -e "$p" ]; then
           find "$p" -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} -rf \;
@@ -34,8 +35,9 @@ runs:
         artifact-ids: ${{ inputs.artifact-id }}
         run-id: ${{ inputs.artifact-runner-id}}
     - name: unwrap the zip crap
-      shell: bash -ex
+      shell: bash
       run: |
+        set -ex
         find .
         unzip -e ${{ steps.download.outputs.download-path }}
         rm ${{ steps.download.outputs.download-path }}
