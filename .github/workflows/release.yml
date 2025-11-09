@@ -67,7 +67,7 @@ jobs:
         path: dist/*
 
     - name: Testing the release
-      uses: ./.github/workflows/_run_tests.yml
+      uses: ./.github/workflows/test.yml
       with:
         artifact-id: ${{ steps.artifacts.outputs.artifact-id }}
 
