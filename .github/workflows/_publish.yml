@@ -1,0 +1,47 @@
+name: publish
+
+on:
+  workflow_call:
+    inputs:
+      is_test:
+        type: boolean
+        required: true
+        default: true
+      release-artifact-ids:
+        type: string
+        required: true
+        description: what artifact ids to fetch.  Comma delimited.
+      artifact-runner-id:
+        type: string
+        required: true
+
+
+jobs:
+  publish:
+    environment: ${{ inputs.is_test && 'test-release' || 'release' }}
+    permissions:
+      id-token: write # Used to authenticate to PyPI via OIDC
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v5
+      with:
+        artifact-ids: ${{ inputs.release-artifact-ids }}
+        artifact-runner: ${{ inputs.artifact-runner-id }}
+
+    - name: Publish github source
+      if: ${{ ! inputs.is_test }}
+      uses: softprops/action-gh/release@v2
+      with:
+        files: '*.tar.*'
+        fail_on_unmatched_files: true
+        draft: true
+
+    - name: Publish to PyPi server
+      uses: pypa/gh-action-pypi-publish@release/v1.13
+      with:
+        packages-dir: ./
+        repository-url: https://${{ inputs.is_test && 'test.pypi.org' || 'pypi.org' }}/legacy

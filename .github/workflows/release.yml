@@ -2,23 +2,25 @@ name: release
 
 on:
   push:
-    branches: [deploy]
+    branches: [deploy, test-pre-release]
     tags: [v*]
   workflow_dispatch:
 
+
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment: release
+    outputs:
+      release-artifact-id: ${{ steps.upload-release.outputs.artifact-id }}
+      wheel-artifact-id: ${{ steps.upload-wheel.outputs.artifact-id }}
+      artifact-runner: ${{ github.job }}
 
     permissions:
-      id-token: write # Used to authenticate to PyPI via OIDC
-
       contents: write # Used to authenticate github release publish
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Reject any VCS dependencies
       shell: python
@@ -41,12 +43,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build ".[test,doc]"
-
-    - name: Test with pytest
-      env:
-        PY_COLORS: 1 # forcibly enable pytest colors
-      run: pytest
+        pip install build ".[doc]"
 
     - name: Build sdist
       run: |
@@ -60,21 +57,42 @@ jobs:
     - name: Output dist file info
       run: |
         sha512sum dist/*
+        echo ::group::Release contents
         tar -ztf dist/*.tar.gz | sort
+        echo ::endgroup::
+        echo ::group::All generated content in dist
+        find .
+        echo ::endgroup::
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload wheel
+      id: upload-wheel
+      uses: actions/upload-artifact@v5
       with:
-        name: results
-        path: dist/*
+        name: wheel-release
+        path: dist/*.whl
+        if-no-files-found: error
 
-    - name: publish
-      uses: pypa/gh-action-pypi-publish@release/v1
-      if: startsWith(github.ref, 'refs/tags/')
-
-    - name: Create GitHub release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
+    - name: Upload release source
+      id: upload-release
+      uses: actions/upload-artifact@v5
       with:
-        files: dist/*.tar.gz
-        fail_on_unmatched_files: true
-        draft: true
+        name: release-source
+        path: dist/*.tar.gz
+        if-no-files-found: error
+
+  test:
+    uses: ./.github/workflows/test.yml
+    needs: [build]
+    with:
+        release-artifact-id: ${{ needs.build.outputs.release-artifact-id }}
+        artifact-runner-id: ${{ github.runner }}
+        format-check: false
+
+  publish:
+    if: github.ref_type == 'tag' || github.ref == '/refs/branches/test-pre-release'
+    needs: [build, test]
+    uses: ./.github/workflows/_publish.yml
+    with:
+      is_test: ${{ github.ref_type == 'tag' }}
+      release-artifact-id: ${{ needs.build.outputs.release-artifact-id }}
+      artifact-runner-id: ${{ github.runner }}
