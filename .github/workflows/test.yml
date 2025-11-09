@@ -5,7 +5,12 @@ on:
     branches-ignore: [deploy]
   pull_request:
     branches: [master]
-
+  workflow_call:
+    inputs:
+      artifact-id:
+        required: true
+        type: number
+        description: The artifact-id to run the tests against.
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -33,7 +38,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: git+https://github.com./.github/actions/checkout
+      with:
+        artifact-id: ${{ inputs.artifact-id }}
+      
 
     - name: Pin dependencies to minimal versions
       if: ${{ matrix.deps == 'minimal-deps' }}
