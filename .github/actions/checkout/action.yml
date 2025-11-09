@@ -21,7 +21,7 @@ runs:
         set -ex
         p=${{ inputs.path || '.' }}/
         if [ -e "$p" ]; then
-          find "$p" -maxdepth 1 -mindepth 1 \! -name .github -exec rm {} -rf \;
+          find "$p" -maxdepth 1 -mindepth 1 \! -name .github -exec rm -rf {} \+
         fi
     - name: post Wipe
       shell: bash
