@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     outputs:
-      artifact-id: ${{ steps.release-upload.outputs.artifact-id }}
+      artifact-id: ${{ steps.release-upload.outputs.artifact-id || '' }}
 
     permissions:
       id-token: write # Used to authenticate to PyPI via OIDC
@@ -65,7 +65,7 @@ jobs:
       id: release-upload
       uses: actions/upload-artifact@v5
       with:
-        name: release-${{ github.sha }}.tar.gz
+        name: release-${{ github.sha }}.zip
         path: dist/*
 
   test:
