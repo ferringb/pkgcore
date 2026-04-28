@@ -93,7 +93,7 @@ jobs:
         use_last_release: [False, True]
       fail-fast: false
     steps:
-    - uses: pkgcore/gh-actions/test-revdep@main
+    - uses: ferringb/gh-actions/test-revdep@main
       with:
         target: ${{ matrix.target }}
         use_last_release: ${{ matrix.use_last_release && 'yes' || '' }}
