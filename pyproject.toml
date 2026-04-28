@@ -32,7 +32,7 @@ classifiers = [
 dynamic = ["version"]
 
 dependencies = [
-	"snakeoil@git+https://github.com//snakeoil.git#master",
+	"snakeoil@git+https://github.com/ferringb/snakeoil.git#master",
 	"lxml",
 ]
 
