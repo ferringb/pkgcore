@@ -89,56 +89,15 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        repo: ['pkgcheck', 'pkgdev']
+        target: ['pkgcheck', 'pkgdev']
+        use_last_release: [False, True]
+      fail-fast: false
     steps:
-    - name: Checkout pkgcore
-      uses: pkgcore/gh-actions/get-source@main
+    - uses: pkgcore/gh-actions/test-revdep@main
       with:
+        target: ${{ matrix.target }}
+        use_last_release: ${{ matrix.use_last_release && 'yes' || '' }}
         artifact-id: ${{ inputs.release-artifact-id }}
-        path: pkgcore
-
-    - name: Install bash 5.3
-      uses: pkgcore/gh-actions/bash-5.3@main
-
-    - name: Find last ${{ matrix.repo }} release
-      run: |
-        versions=$(git ls-remote -q --refs https://github.com/pkgcore/${{ matrix.repo }}  | \
-          sed -nre 's:.*refs/tags/(.+)$:\1:p' | \
-          sort -V)
-        echo found versions:
-        echo "${versions}"
-        latest=$(echo "$versions" | tail -n 1)
-        echo "latest=${latest}"
-        [ -z "$latest" ] && { echo "failed finding the tag"; exit 1; }
-        echo "LATEST_TAG=$latest" >> $GITHUB_ENV
-
-    - name: Checkout ${{ matrix.repo }} ${{ env.LATEST_TAG }}
-      uses: actions/checkout@v5
-      with:
-        repository: pkgcore/${{ matrix.repo }}
-        path: ${{ matrix.repo }}
-        ref: refs/tags/${{ env.LATEST_TAG }}
-
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        cache: 'pip'
-        cache-dependency-path: |
-          pkgcore/pyproject.toml
-          ${{ matrix.repo }}/pyproject.toml
-
-    - name: Install pip dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade "./pkgcore"
-        pip install --upgrade "./${{ matrix.repo }}[test]"
-
-    - name: Test with pytest
-      working-directory: ./${{ matrix.repo }}
-      env:
-        PY_COLORS: 1 # forcibly enable pytest colors
-      run: pytest -v
 
   lint:
     runs-on: ubuntu-latest
