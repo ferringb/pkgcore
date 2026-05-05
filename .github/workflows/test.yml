@@ -163,6 +163,9 @@ jobs:
         args: "format --check --diff"
 
   gentoo-regen:
+    env:
+      # necessary to adapt to the GH constraints and container
+      FEATURES: -pid-sandbox -ipc-sandbox -network-sandbox
     container:
       image: docker.io/gentoo/stage3:latest
     runs-on: ubuntu-latest
@@ -179,11 +182,18 @@ jobs:
         repository: gentoo/gentoo
         path: gentoo
 
+
     - name: Link gentoo repo
       run: ln -s ${PWD}/gentoo /var/db/repos/gentoo
 
     - name: Install dev-python/pip
-      run: getuto && FEATURES="-pid-sandbox -ipc-sandbox -network-sandbox" emerge -j2 -g1 dev-python/pip
+      run: getuto && emerge -j2 -g dev-python/pip
+
+    # Note: this should be keyed to if a dep *is* VCS, but that in turn requires a step that outputs an env variable
+    # which this would consume.  Just install the dep instead.
+    - name: install git
+      # use the CP; for infuriating reasons, dev-ruby/git exists
+      run: emerge -j2 -g dev-vcs/git
 
     - name: Install pkgcore
       run: pip install --upgrade --break-system-packages "./pkgcore"
